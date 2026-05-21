@@ -1,0 +1,18 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Backend
+backend/uploads/
+backend/.env
+backend/prisma/*.db
+backend/prisma/*.db-journal
+
+# Frontend
+frontend/dist/
+frontend/.env
+
+# Sistema
+.DS_Store
+*.log
