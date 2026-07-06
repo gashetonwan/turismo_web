@@ -1,7 +1,7 @@
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../api'; // <-- Importar la instancia
 
 function AdminCrud() {
   const { token, user, logout } = useAuth();
@@ -20,7 +20,7 @@ function AdminCrud() {
   const [imagenFile, setImagenFile] = useState(null);
 
   // Configurar axios con token
-  const axiosAuth = axios.create();
+  const axiosAuth = api.create();
   axiosAuth.interceptors.request.use(config => {
     config.headers.Authorization = `Bearer ${token}`;
     return config;
@@ -38,7 +38,7 @@ function AdminCrud() {
   }, [token, user]);
 
   const fetchDestinos = async () => {
-    const res = await axios.get('/api/destinos'); // pública
+    const res = await api.get('/api/destinos'); // pública
     setDestinos(res.data);
   };
 

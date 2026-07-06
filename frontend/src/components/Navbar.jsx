@@ -25,6 +25,15 @@ export default function Navbar() {
           </>
         )}
       </div>
+
+      <a
+        href="https://wa.me/51959243835?text=Hola..."
+        className="fixed bottom-6 right-6 bg-green-500 text-white p-4 rounded-full shadow-2xl hover:bg-green-600 transition-all transform hover:scale-110 z-50 flex items-center justify-center"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <img src="https://cdn-icons-png.flaticon.com/512/733/733585.png" alt="WhatsApp" className="w-8 h-8" />
+      </a>
     </nav>
   );
 }

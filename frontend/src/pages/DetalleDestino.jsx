@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api'; // <-- Importar la instancia
 
 function DetalleDestino() {
   const { id } = useParams();
@@ -9,7 +9,7 @@ function DetalleDestino() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    axios.get(`/api/destinos/${id}`)
+    api.get(`/api/destinos/${id}`)
       .then((res) => setDestino(res.data))
       .catch(() => setError('No se encontró el destino.'))
       .finally(() => setLoading(false));

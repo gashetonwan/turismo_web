@@ -1,14 +1,14 @@
 
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api'; // <-- Importar la instancia
 
 function HomePublic() {
   const [destinos, setDestinos] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('/api/destinos')
+    api.get('/api/destinos')
       .then((res) => setDestinos(res.data))
       .finally(() => setLoading(false));
   }, []);

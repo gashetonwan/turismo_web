@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import api from '../api'; // <-- Importar la instancia
 import { useNavigate, Link } from 'react-router-dom';
 
 export default function Register() {
@@ -12,7 +12,7 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('/api/register', { email, password, role: 'USER' });
+      await api.post('/api/register', { email, password, role: 'USER' });
       setSuccess('Registro exitoso, ahora puedes iniciar sesión');
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {

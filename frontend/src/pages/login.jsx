@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import api from '../api'; // <-- Importar la instancia
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -13,7 +13,7 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('/api/login', { email, password });
+      const res = await api.post('/api/login', { email, password });
       login(res.data.token, res.data.user);
       navigate('/admin'); // redirigir al panel si es admin, o a inicio
     } catch (err) {
