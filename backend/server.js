@@ -34,7 +34,6 @@ const fileFilter = (req, file, cb) => {
   const allowedTypes = /jpeg|jpg|png|gif|webp/;
   const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = allowedTypes.test(file.mimetype);
-
   if (mimetype && extname) {
     return cb(null, true);
   } else {
@@ -44,16 +43,13 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB máximo
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter
 });
 
 // -------------------- Middlewares --------------------
 app.use(helmet());
-app.use(cors({
-  origin: 'https://gashetonwan.github.io', // frontend de Vite
-  credentials: true, // si usas cookies
-}));
+app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -61,7 +57,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // -------------------- Middleware de autenticación --------------------
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  const token = authHeader && authHeader.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'Token requerido' });
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
@@ -99,7 +95,6 @@ app.post('/api/register', async (req, res) => {
       role: role === 'ADMIN' ? 'ADMIN' : 'USER',
     },
   });
-  // No devolvemos el password
   res.status(201).json({ id: user.id, email: user.email, role: user.role });
 });
 
@@ -123,7 +118,6 @@ app.post('/api/login', async (req, res) => {
 });
 
 // -------------------- CRUD de destinos (PROTEGIDO para admin) --------------------
-// Obtener todos los destinos (público)
 app.get('/api/destinos', async (req, res) => {
   try {
     const destinos = await prisma.destino.findMany({
@@ -135,7 +129,6 @@ app.get('/api/destinos', async (req, res) => {
   }
 });
 
-// Obtener un destino por ID (público)
 app.get('/api/destinos/:id', async (req, res) => {
   const id = parseInt(req.params.id);
   if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
@@ -152,11 +145,12 @@ app.get('/api/destinos/:id', async (req, res) => {
   }
 });
 
-// Crear destino (solo admin)
+// --- POST (CREAR) con soporte para URL o archivo ---
 app.post('/api/destinos', authenticateToken, isAdmin, upload.single('imagen'), async (req, res) => {
   try {
-    const { nombre, ubicacion, descripcion, precioPorNoche, destacado } = req.body;
-    const imagenUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    const { nombre, ubicacion, descripcion, precioPorNoche, destacado, imagenUrl } = req.body;
+    // Si hay archivo subido, se usa; si no, se usa la URL del body; si nada, null
+    const imagenFinal = req.file ? `/uploads/${req.file.filename}` : (imagenUrl || null);
 
     const nuevo = await prisma.destino.create({
       data: {
@@ -164,21 +158,22 @@ app.post('/api/destinos', authenticateToken, isAdmin, upload.single('imagen'), a
         ubicacion,
         descripcion,
         precioPorNoche: precioPorNoche ? parseFloat(precioPorNoche) : null,
-        imagenUrl,
+        imagenUrl: imagenFinal,
         destacado: destacado === 'true' || destacado === true
       }
     });
     res.status(201).json(nuevo);
   } catch (error) {
+    console.error(error);
     res.status(400).json({ error: error.message });
   }
 });
 
-// Editar destino (solo admin)
+// --- PUT (EDITAR) con soporte para URL o archivo ---
 app.put('/api/destinos/:id', authenticateToken, isAdmin, upload.single('imagen'), async (req, res) => {
   const { id } = req.params;
   try {
-    const { nombre, ubicacion, descripcion, precioPorNoche, destacado } = req.body;
+    const { nombre, ubicacion, descripcion, precioPorNoche, destacado, imagenUrl } = req.body;
     const dataToUpdate = {
       nombre,
       ubicacion,
@@ -186,7 +181,15 @@ app.put('/api/destinos/:id', authenticateToken, isAdmin, upload.single('imagen')
       precioPorNoche: precioPorNoche ? parseFloat(precioPorNoche) : null,
       destacado: destacado === 'true' || destacado === true
     };
-    if (req.file) dataToUpdate.imagenUrl = `/uploads/${req.file.filename}`;
+
+    if (req.file) {
+      // Si se sube un archivo, se usa esa ruta
+      dataToUpdate.imagenUrl = `/uploads/${req.file.filename}`;
+    } else if (imagenUrl) {
+      // Si no hay archivo pero hay URL en el body, se usa esa URL
+      dataToUpdate.imagenUrl = imagenUrl;
+    }
+    // Si no hay archivo ni URL, no se actualiza imagenUrl (se mantiene el valor anterior)
 
     const destinoActualizado = await prisma.destino.update({
       where: { id: parseInt(id) },
@@ -195,11 +198,11 @@ app.put('/api/destinos/:id', authenticateToken, isAdmin, upload.single('imagen')
     res.json(destinoActualizado);
   } catch (error) {
     if (error.code === 'P2025') return res.status(404).json({ error: 'Destino no encontrado' });
+    console.error(error);
     res.status(400).json({ error: error.message });
   }
 });
 
-// Eliminar destino (solo admin)
 app.delete('/api/destinos/:id', authenticateToken, isAdmin, async (req, res) => {
   const { id } = req.params;
   try {
