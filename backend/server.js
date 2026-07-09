@@ -4,8 +4,10 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const helmet = require('helmet');
-const path = require('path');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
+const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { PrismaClient } = require('@prisma/client');
@@ -22,14 +24,25 @@ const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-// -------------------- Configuración de multer (imágenes) --------------------
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + '-' + file.originalname);
+
+// Configurar Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Configurar el storage de Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'turismo_destinos', // Carpeta en Cloudinary
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+    transformation: [{ width: 800, height: 600, crop: 'limit' }] // Optimización
   }
 });
+
+
 const fileFilter = (req, file, cb) => {
   const allowedTypes = /jpeg|jpg|png|gif|webp/;
   const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -52,7 +65,6 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // -------------------- Middleware de autenticación --------------------
 const authenticateToken = (req, res, next) => {
@@ -149,8 +161,11 @@ app.get('/api/destinos/:id', async (req, res) => {
 app.post('/api/destinos', authenticateToken, isAdmin, upload.single('imagen'), async (req, res) => {
   try {
     const { nombre, ubicacion, descripcion, precioPorNoche, destacado, imagenUrl } = req.body;
-    // Si hay archivo subido, se usa; si no, se usa la URL del body; si nada, null
-    const imagenFinal = req.file ? `/uploads/${req.file.filename}` : (imagenUrl || null);
+
+    const imagenFinal = (imagenUrl || null);
+    if (req.file) {
+      imagenFinal = req.file.path;
+    }
 
     const nuevo = await prisma.destino.create({
       data: {
@@ -184,7 +199,7 @@ app.put('/api/destinos/:id', authenticateToken, isAdmin, upload.single('imagen')
 
     if (req.file) {
       // Si se sube un archivo, se usa esa ruta
-      dataToUpdate.imagenUrl = `/uploads/${req.file.filename}`;
+      dataToUpdate.imagenUrl = req.file.path;
     } else if (imagenUrl) {
       // Si no hay archivo pero hay URL en el body, se usa esa URL
       dataToUpdate.imagenUrl = imagenUrl;
