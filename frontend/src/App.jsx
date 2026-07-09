@@ -9,7 +9,7 @@ import Register from './pages/Register.jsx';
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename='/turismo_web'>
       <Navbar />
       <Routes>
         <Route path="/" element={<HomePublic />} />

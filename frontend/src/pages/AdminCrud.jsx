@@ -1,7 +1,7 @@
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import api from '../api'; // <-- Importar la instancia
+import api from '../api.js';
 
 function AdminCrud() {
   const { token, user, logout } = useAuth();
@@ -26,7 +26,6 @@ function AdminCrud() {
     return config;
   });
 
-  // Si no es admin, redirigir
   useEffect(() => {
     if (!token) {
       navigate('/login');
@@ -38,7 +37,7 @@ function AdminCrud() {
   }, [token, user]);
 
   const fetchDestinos = async () => {
-    const res = await api.get('/api/destinos'); // pública
+    const res = await api.get('/api/destinos'); // ✅ Con /api
     setDestinos(res.data);
   };
 
@@ -50,13 +49,19 @@ function AdminCrud() {
     formData.append('precioPorNoche', form.precioPorNoche);
     formData.append('descripcion', form.descripcion);
     formData.append('destacado', form.destacado);
-    if (imagenFile) formData.append('imagen', imagenFile);
+
+    if (form.imagenUrl) {
+      formData.append('imagenUrl', form.imagenUrl);
+    }
+    if (imagenFile) {
+      formData.append('imagen', imagenFile);
+    }
 
     try {
       if (editando) {
-        await axiosAuth.put(`/api/destinos/${form.id}`, formData);
+        await axiosAuth.put(`/api/destinos/${form.id}`, formData); // ✅ Con /api
       } else {
-        await axiosAuth.post('/api/destinos', formData);
+        await axiosAuth.post('/api/destinos', formData); // ✅ Con /api
       }
       resetForm();
       fetchDestinos();
@@ -81,7 +86,7 @@ function AdminCrud() {
 
   const handleDelete = async (id) => {
     if (window.confirm('¿Eliminar este destino?')) {
-      await axiosAuth.delete(`/api/destinos/${id}`);
+      await axiosAuth.delete(`/api/destinos/${id}`); // ✅ Con /api
       fetchDestinos();
     }
   };
@@ -96,7 +101,6 @@ function AdminCrud() {
     <div className="p-8 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">⚙️ Panel de Administración</h1>
 
-      {/* Formulario de creación/edición */}
       <form onSubmit={handleSubmit} className="mb-8 border p-4 rounded bg-gray-50">
         <h2 className="text-xl font-semibold mb-2">{editando ? 'Editar Destino' : 'Nuevo Destino'}</h2>
         <input
@@ -126,12 +130,22 @@ function AdminCrud() {
           value={form.descripcion}
           onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
         />
+
+        <input
+          className="border p-2 w-full mb-2"
+          placeholder="URL de imagen (ej: https://picsum.photos/800/600?random=1)"
+          value={form.imagenUrl}
+          onChange={(e) => setForm({ ...form, imagenUrl: e.target.value })}
+        />
+
+        <p className="text-sm text-gray-500 mb-1">O sube una imagen desde tu computadora:</p>
         <input
           className="border p-2 w-full mb-2"
           type="file"
           accept="image/*"
           onChange={(e) => setImagenFile(e.target.files[0])}
         />
+
         <label className="flex items-center mb-2">
           <input
             type="checkbox"
@@ -153,7 +167,6 @@ function AdminCrud() {
         </div>
       </form>
 
-      {/* Lista de destinos */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {destinos.map((d) => (
           <div key={d.id} className="border rounded p-4 shadow">
@@ -166,7 +179,7 @@ function AdminCrud() {
             <p className="text-sm">{d.descripcion}</p>
             {d.destacado && (
               <span className="inline-block bg-yellow-200 text-yellow-800 text-xs px-2 py-1 rounded mt-2">
-                Destacado
+                ⭐ Destacado
               </span>
             )}
             <div className="flex gap-2 mt-3">

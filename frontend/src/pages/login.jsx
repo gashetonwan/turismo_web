@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../api'; // <-- Importar la instancia
+import api from '../api.js'; // <-- Importar la instancia
 
 export default function Login() {
   const [email, setEmail] = useState('');

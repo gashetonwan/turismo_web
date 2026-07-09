@@ -1,9 +1,11 @@
-
-
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../api.js'; // <-- Importar la instancia
 
 function AdminCrud() {
+  const { token, user, logout } = useAuth();
+  const navigate = useNavigate();
   const [destinos, setDestinos] = useState([]);
   const [form, setForm] = useState({
     id: null,
@@ -15,21 +17,53 @@ function AdminCrud() {
     destacado: false,
   });
   const [editando, setEditando] = useState(false);
+  const [imagenFile, setImagenFile] = useState(null);
+
+  // Configurar axios con token
+  const axiosAuth = api.create();
+  axiosAuth.interceptors.request.use(config => {
+    config.headers.Authorization = `Bearer ${token}`;
+    return config;
+  });
+
+  // Si no es admin, redirigir
+  useEffect(() => {
+    if (!token) {
+      navigate('/login');
+    } else if (user?.role !== 'ADMIN') {
+      navigate('/');
+    } else {
+      fetchDestinos();
+    }
+  }, [token, user]);
 
   const fetchDestinos = async () => {
-    const res = await axios.get('/api/destinos');
+    const res = await api.get('/api/destinos'); // pública
     setDestinos(res.data);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editando) {
-      await axios.put(`/api/destinos/${form.id}`, form);
-    } else {
-      await axios.post('/api/destinos', form);
+    const formData = new FormData();
+    formData.append('nombre', form.nombre);
+    formData.append('ubicacion', form.ubicacion);
+    formData.append('precioPorNoche', form.precioPorNoche);
+    formData.append('descripcion', form.descripcion);
+    formData.append('destacado', form.destacado);
+    if (imagenFile) formData.append('imagen', imagenFile);
+
+    try {
+      if (editando) {
+        await axiosAuth.put(`/api/destinos/${form.id}`, formData);
+      } else {
+        await axiosAuth.post('/api/destinos', formData);
+      }
+      resetForm();
+      fetchDestinos();
+    } catch (err) {
+      console.error(err);
+      alert('Error al guardar');
     }
-    resetForm();
-    fetchDestinos();
   };
 
   const handleEdit = (destino) => {
@@ -47,7 +81,7 @@ function AdminCrud() {
 
   const handleDelete = async (id) => {
     if (window.confirm('¿Eliminar este destino?')) {
-      await axios.delete(`/api/destinos/${id}`);
+      await axiosAuth.delete(`/api/destinos/${id}`);
       fetchDestinos();
     }
   };
@@ -55,11 +89,8 @@ function AdminCrud() {
   const resetForm = () => {
     setForm({ id: null, nombre: '', ubicacion: '', precioPorNoche: '', descripcion: '', imagenUrl: '', destacado: false });
     setEditando(false);
+    setImagenFile(null);
   };
-
-  useEffect(() => {
-    fetchDestinos();
-  }, []);
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
@@ -97,9 +128,9 @@ function AdminCrud() {
         />
         <input
           className="border p-2 w-full mb-2"
-          placeholder="URL de imagen"
-          value={form.imagenUrl}
-          onChange={(e) => setForm({ ...form, imagenUrl: e.target.value })}
+          type="file"
+          accept="image/*"
+          onChange={(e) => setImagenFile(e.target.files[0])}
         />
         <label className="flex items-center mb-2">
           <input

@@ -1,7 +1,6 @@
-
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../api'; // <-- Importar la instancia
+import api from '../api.js';
 
 function HomePublic() {
   const [destinos, setDestinos] = useState([]);
@@ -37,6 +36,11 @@ function HomePublic() {
                   src={d.imagenUrl}
                   alt={d.nombre}
                   className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
+                  onError={(e) => {
+                    // Si la imagen falla, usa una de respaldo
+                    e.target.src = 'https://picsum.photos/seed/' + d.id + '/800/600';
+                    e.target.onerror = null; // Evita bucle infinito
+                  }}
                 />
               ) : (
                 <div className="w-full h-40 bg-gray-100 flex items-center justify-center text-4xl">🗺️</div>

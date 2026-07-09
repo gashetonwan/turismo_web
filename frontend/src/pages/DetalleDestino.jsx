@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import api from '../api'; // <-- Importar la instancia
+import api from '../api.js';
 
 function DetalleDestino() {
   const { id } = useParams();
@@ -34,12 +34,20 @@ function DetalleDestino() {
         ← Volver al inicio
       </Link>
 
-      {destino.imagenUrl && (
+      {destino.imagenUrl ? (
         <img
           src={destino.imagenUrl}
           alt={destino.nombre}
           className="w-full h-64 object-cover rounded-xl mb-6"
+          onError={(e) => {
+            e.target.src = 'https://picsum.photos/seed/' + destino.id + '/800/600';
+            e.target.onerror = null;
+          }}
         />
+      ) : (
+        <div className="w-full h-64 bg-gray-100 flex items-center justify-center text-6xl mb-6 rounded-xl">
+          🗺️
+        </div>
       )}
 
       <div className="flex items-center gap-3 mb-2">
@@ -67,4 +75,3 @@ function DetalleDestino() {
 }
 
 export default DetalleDestino;
-
