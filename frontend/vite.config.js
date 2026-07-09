@@ -17,5 +17,5 @@ export default defineConfig({
       }
     }
   },
-  base: '/turismo_web',
+  base: '/turismo_web/',
 })

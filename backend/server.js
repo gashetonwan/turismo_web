@@ -30,12 +30,28 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + '-' + file.originalname);
   }
 });
-const upload = multer({ storage });
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = /jpeg|jpg|png|gif|webp/;
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = allowedTypes.test(file.mimetype);
+
+  if (mimetype && extname) {
+    return cb(null, true);
+  } else {
+    cb(new Error('Solo se permiten imágenes (jpeg, jpg, png, gif, webp)'));
+  }
+};
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB máximo
+  fileFilter
+});
 
 // -------------------- Middlewares --------------------
 app.use(helmet());
 app.use(cors({
-  origin: 'http://localhost:5173', // frontend de Vite
+  origin: 'https://gashetonwan.github.io', // frontend de Vite
   credentials: true, // si usas cookies
 }));
 app.use(express.json());
