@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import HomePublic from "./pages/HomePublic";
+import "./index.css";
 import AdminCrud from "./pages/AdminCrud.jsx";
 import DetalleDestino from "./pages/DetalleDestino";
 import ProtectedRoute from "./components/ProtectedRoute";
