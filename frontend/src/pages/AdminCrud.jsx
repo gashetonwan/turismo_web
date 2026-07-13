@@ -1,7 +1,7 @@
-import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import api from '../api.js';
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import api from "../api.js";
 
 function AdminCrud() {
   const { token, user, logout } = useAuth();
@@ -9,11 +9,11 @@ function AdminCrud() {
   const [destinos, setDestinos] = useState([]);
   const [form, setForm] = useState({
     id: null,
-    nombre: '',
-    ubicacion: '',
-    precioPorNoche: '',
-    descripcion: '',
-    imagenUrl: '',
+    nombre: "",
+    ubicacion: "",
+    precioPorNoche: "",
+    descripcion: "",
+    imagenUrl: "",
     destacado: false,
   });
   const [editando, setEditando] = useState(false);
@@ -21,53 +21,53 @@ function AdminCrud() {
 
   // Configurar axios con token
   const axiosAuth = api.create();
-  axiosAuth.interceptors.request.use(config => {
+  axiosAuth.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
     return config;
   });
 
   useEffect(() => {
     if (!token) {
-      navigate('/login');
-    } else if (user?.role !== 'ADMIN') {
-      navigate('/');
+      navigate("/login");
+    } else if (user?.role !== "ADMIN") {
+      navigate("/");
     } else {
       fetchDestinos();
     }
   }, [token, user]);
 
   const fetchDestinos = async () => {
-    const res = await api.get('/api/destinos'); // ✅ Con /api
+    const res = await api.get("/api/destinos"); // ✅ Con /api
     setDestinos(res.data);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
-    formData.append('nombre', form.nombre);
-    formData.append('ubicacion', form.ubicacion);
-    formData.append('precioPorNoche', form.precioPorNoche);
-    formData.append('descripcion', form.descripcion);
-    formData.append('destacado', form.destacado);
+    formData.append("nombre", form.nombre);
+    formData.append("ubicacion", form.ubicacion);
+    formData.append("precioPorNoche", form.precioPorNoche);
+    formData.append("descripcion", form.descripcion);
+    formData.append("destacado", form.destacado);
 
     if (form.imagenUrl) {
-      formData.append('imagenUrl', form.imagenUrl);
+      formData.append("imagenUrl", form.imagenUrl);
     }
     if (imagenFile) {
-      formData.append('imagen', imagenFile);
+      formData.append("imagen", imagenFile);
     }
 
     try {
       if (editando) {
         await axiosAuth.put(`/api/destinos/${form.id}`, formData); // ✅ Con /api
       } else {
-        await axiosAuth.post('/api/destinos', formData); // ✅ Con /api
+        await axiosAuth.post("/api/destinos", formData); // ✅ Con /api
       }
       resetForm();
       fetchDestinos();
     } catch (err) {
       console.error(err);
-      alert('Error al guardar');
+      alert("Error al guardar");
     }
   };
 
@@ -75,24 +75,32 @@ function AdminCrud() {
     setForm({
       id: destino.id,
       nombre: destino.nombre,
-      ubicacion: destino.ubicacion || '',
-      precioPorNoche: destino.precioPorNoche || '',
-      descripcion: destino.descripcion || '',
-      imagenUrl: destino.imagenUrl || '',
+      ubicacion: destino.ubicacion || "",
+      precioPorNoche: destino.precioPorNoche || "",
+      descripcion: destino.descripcion || "",
+      imagenUrl: destino.imagenUrl || "",
       destacado: destino.destacado || false,
     });
     setEditando(true);
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('¿Eliminar este destino?')) {
+    if (window.confirm("¿Eliminar este destino?")) {
       await axiosAuth.delete(`/api/destinos/${id}`); // ✅ Con /api
       fetchDestinos();
     }
   };
 
   const resetForm = () => {
-    setForm({ id: null, nombre: '', ubicacion: '', precioPorNoche: '', descripcion: '', imagenUrl: '', destacado: false });
+    setForm({
+      id: null,
+      nombre: "",
+      ubicacion: "",
+      precioPorNoche: "",
+      descripcion: "",
+      imagenUrl: "",
+      destacado: false,
+    });
     setEditando(false);
     setImagenFile(null);
   };
@@ -101,8 +109,13 @@ function AdminCrud() {
     <div className="p-8 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">⚙️ Panel de Administración</h1>
 
-      <form onSubmit={handleSubmit} className="mb-8 border p-4 rounded bg-gray-50">
-        <h2 className="text-xl font-semibold mb-2">{editando ? 'Editar Destino' : 'Nuevo Destino'}</h2>
+      <form
+        onSubmit={handleSubmit}
+        className="mb-8 border p-4 rounded bg-gray-50"
+      >
+        <h2 className="text-xl font-semibold mb-2">
+          {editando ? "Editar Destino" : "Nuevo Destino"}
+        </h2>
         <input
           className="border p-2 w-full mb-2"
           placeholder="Nombre"
@@ -122,7 +135,9 @@ function AdminCrud() {
           step="0.01"
           placeholder="Precio por noche"
           value={form.precioPorNoche}
-          onChange={(e) => setForm({ ...form, precioPorNoche: parseFloat(e.target.value) })}
+          onChange={(e) =>
+            setForm({ ...form, precioPorNoche: parseFloat(e.target.value) })
+          }
         />
         <textarea
           className="border p-2 w-full mb-2"
@@ -138,7 +153,9 @@ function AdminCrud() {
           onChange={(e) => setForm({ ...form, imagenUrl: e.target.value })}
         />
 
-        <p className="text-sm text-gray-500 mb-1">O sube una imagen desde tu computadora:</p>
+        <p className="text-sm text-gray-500 mb-1">
+          O sube una imagen desde tu computadora:
+        </p>
         <input
           className="border p-2 w-full mb-2"
           type="file"
@@ -156,11 +173,18 @@ function AdminCrud() {
           Destacado
         </label>
         <div className="flex gap-2">
-          <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
-            {editando ? 'Actualizar' : 'Crear'}
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            {editando ? "Actualizar" : "Crear"}
           </button>
           {editando && (
-            <button type="button" onClick={resetForm} className="bg-gray-500 text-white px-4 py-2 rounded">
+            <button
+              type="button"
+              onClick={resetForm}
+              className="bg-gray-500 text-white px-4 py-2 rounded"
+            >
               Cancelar
             </button>
           )}
@@ -171,11 +195,17 @@ function AdminCrud() {
         {destinos.map((d) => (
           <div key={d.id} className="border rounded p-4 shadow">
             {d.imagenUrl && (
-              <img src={d.imagenUrl} alt={d.nombre} className="w-full h-32 object-cover mb-2 rounded" />
+              <img
+                src={d.imagenUrl}
+                alt={d.nombre}
+                className="w-full h-32 object-cover mb-2 rounded"
+              />
             )}
             <h2 className="text-xl font-semibold">{d.nombre}</h2>
             <p className="text-gray-600">{d.ubicacion}</p>
-            <p className="text-green-600 font-bold">${d.precioPorNoche}/noche</p>
+            <p className="text-green-600 font-bold">
+              ${d.precioPorNoche}/noche
+            </p>
             <p className="text-sm">{d.descripcion}</p>
             {d.destacado && (
               <span className="inline-block bg-yellow-200 text-yellow-800 text-xs px-2 py-1 rounded mt-2">
@@ -183,10 +213,16 @@ function AdminCrud() {
               </span>
             )}
             <div className="flex gap-2 mt-3">
-              <button onClick={() => handleEdit(d)} className="bg-yellow-500 text-white px-3 py-1 rounded">
+              <button
+                onClick={() => handleEdit(d)}
+                className="bg-yellow-500 text-white px-3 py-1 rounded"
+              >
                 Editar
               </button>
-              <button onClick={() => handleDelete(d.id)} className="bg-red-500 text-white px-3 py-1 rounded">
+              <button
+                onClick={() => handleDelete(d.id)}
+                className="bg-red-500 text-white px-3 py-1 rounded"
+              >
                 Eliminar
               </button>
             </div>
