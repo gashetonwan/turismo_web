@@ -43,31 +43,60 @@ function AdminCrud() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const formData = new FormData();
     formData.append("nombre", form.nombre);
-    formData.append("ubicacion", form.ubicacion);
-    formData.append("precioPorNoche", form.precioPorNoche);
-    formData.append("descripcion", form.descripcion);
+    formData.append("ubicacion", form.ubicacion || "");
+    formData.append("precioPorNoche", form.precioPorNoche || "");
+    formData.append("descripcion", form.descripcion || "");
     formData.append("destacado", form.destacado);
 
+    // Agregar URL si existe
     if (form.imagenUrl) {
       formData.append("imagenUrl", form.imagenUrl);
     }
+
+    // Agregar archivo si existe (tiene prioridad sobre la URL)
     if (imagenFile) {
       formData.append("imagen", imagenFile);
     }
 
+    // ✅ Depuración: ver qué se está enviando
+    console.log("📤 Enviando FormData:");
+    for (let pair of formData.entries()) {
+      console.log(pair[0] + ":", pair[0] === "imagen" ? "📷 Archivo" : pair[1]);
+    }
+
     try {
-      if (editando) {
-        await axiosAuth.put(`/api/destinos/${form.id}`, formData); // ✅ Con /api
-      } else {
-        await axiosAuth.post("/api/destinos", formData); // ✅ Con /api
+      const url = editando
+        ? `https://turismo-web-glpa.onrender.com/api/destinos/${form.id}`
+        : "https://turismo-web-glpa.onrender.com/api/destinos";
+
+      const method = editando ? "PUT" : "POST";
+
+      // ✅ Usar fetch directamente (igual que en el script de prueba)
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // NO pongas 'Content-Type' aquí, fetch lo pondrá automáticamente con el boundary
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error al guardar");
       }
+
+      const data = await response.json();
+      console.log("✅ Respuesta:", data);
       resetForm();
       fetchDestinos();
+      alert(editando ? "✅ Destino actualizado" : "✅ Destino creado");
     } catch (err) {
-      console.error(err);
-      alert("Error al guardar");
+      console.error("❌ Error:", err);
+      alert("❌ Error al guardar: " + err.message);
     }
   };
 
